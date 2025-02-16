@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Runtime: python3.13
+    Timeout: 180
+
+Resources:
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Functions that process S3 data
+      FunctionName: etl-transform-zero-padding-handler
+      Handler: app.lambda_handler
+      CodeUri: handler
+
+  StateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: etl-transform-zero-padding-workflow
+      Definition:
+        StartAt: Lambda Invoke
+        States:
+          Lambda Invoke:
+            Type: Task
+            Resource: !GetAtt Function.Arn
+            Parameters:
+              FunctionName: !Ref Function
+            Retry:
+              - ErrorEquals:
+                  - Lambda.ServiceException
+                  - Lambda.AWSLambdaException
+                  - Lambda.SdkClientException
+                  - Lambda.TooManyRequestsException
+                IntervalSeconds: 1
+                MaxAttempts: 3
+                BackoffRate: 2
+                JitterStrategy: FULL
+            Next: Athena StartQueryExecution
+
+          Athena StartQueryExecution:
+            Type: Task
+            Resource: arn:aws:states:::athena:startQueryExecution.sync
+            Parameters:
+              QueryString: "SELECT * FROM zero_padding_result LIMIT 10;"
+              QueryExecutionContext:
+                Database: "kodaka_athena_db"
+              WorkGroup: "primary"
+              ResultConfiguration:
+                OutputLocation: "s3://kodaka-source-bucket/etl-transform-zero-padding/test/"
+            Next: Athena GetQueryResults
+
+          Athena GetQueryResults:
+            Type: Task
+            Resource: arn:aws:states:::athena:getQueryResults
+            Parameters:
+              QueryExecutionId.$: "$.QueryExecution.QueryExecutionId"
+            End: true
+
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref Function
+        - Statement:
+            Effect: Allow
+            Action:
+              - athena:StartQueryExecution
+              - athena:GetQueryResults
+              - athena:GetQueryExecution
+            Resource: "*"
+
+Outputs:
+  Function:
+    Description: "etl-transform-data-v1 Lambda Function ARN"
+    Value: "arn:aws:lambada:${AWS:Region}:${AWS:AccountID}:function:etl-transform-zero-padding-handler"
+
+  StateMachineArn:
+    Description: "ARN of the Step Functions State Machine"
+    Value: "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:etl-transform-zero-padding-workflow"
