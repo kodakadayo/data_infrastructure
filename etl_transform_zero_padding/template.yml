@@ -37,13 +37,25 @@ Resources:
                 MaxAttempts: 3
                 BackoffRate: 2
                 JitterStrategy: FULL
-            Next: Athena StartQueryExecution
+            Next: Athena Insert Into Iceberg
 
-          Athena StartQueryExecution:
+          Athena Insert Into Iceberg:
             Type: Task
             Resource: arn:aws:states:::athena:startQueryExecution.sync
             Parameters:
-              QueryString: "SELECT * FROM zero_padding_result LIMIT 10;"
+              QueryString: "INSERT INTO kodaka_athena_db.zr_pddng_rslt_icbrg_tbl SELECT * FROM zero_padding_result;"
+              QueryExecutionContext:
+                Database: "kodaka_athena_db"
+              WorkGroup: "primary"
+              ResultConfiguration:
+                OutputLocation: "s3://kodaka-source-bucket/etl-transform-zero-padding/test/"
+            Next: Athena Select Iceberg
+
+          Athena Select Iceberg:
+            Type: Task
+            Resource: arn:aws:states:::athena:startQueryExecution.sync
+            Parameters:
+              QueryString: "SELECT * FROM zr_pddng_rslt_icbrg_tbl LIMIT 10;"
               QueryExecutionContext:
                 Database: "kodaka_athena_db"
               WorkGroup: "primary"
