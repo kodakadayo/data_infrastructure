@@ -48,7 +48,7 @@ Resources:
                 Database: "kodaka_athena_db"
               WorkGroup: "primary"
               ResultConfiguration:
-                OutputLocation: "s3://kodaka-source-bucket/etl-transform-zero-padding/test/"
+                OutputLocation: "s3://xxxxxxxxx/etl-transform-zero-padding/test/"
             Next: Athena Select Iceberg
 
           Athena Select Iceberg:
@@ -60,7 +60,7 @@ Resources:
                 Database: "kodaka_athena_db"
               WorkGroup: "primary"
               ResultConfiguration:
-                OutputLocation: "s3://kodaka-source-bucket/etl-transform-zero-padding/test/"
+                OutputLocation: "s3://xxxxxxxxx/etl-transform-zero-padding/test/"
             Next: Athena GetQueryResults
 
           Athena GetQueryResults:

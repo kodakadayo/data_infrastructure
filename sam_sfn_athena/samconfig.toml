@@ -7,7 +7,7 @@ use_container = false
 
 [default.deploy.parameters]
 stack_name = "etl-transform-data-v1"
-s3_bucket = "kodaka-source-bucket"
+s3_bucket = "xxxxxxxxxxx"
 s3_prefix = "etl-transform-zero-padding/templete"
 region = "ap-northeast-1"
 capabilities = "CAPABILITY_IAM"
