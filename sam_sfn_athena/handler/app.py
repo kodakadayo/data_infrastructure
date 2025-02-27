@@ -62,3 +62,4 @@ def save_to_s3(bucket_name, file_output, data):
     output.seek(0)  # StringIO のカーソルを先頭に戻す
     s3.put_object(Bucket=bucket_name, Key=file_output, Body=output.getvalue().encode("utf-8"))
     print(f"ファイル {file_output} を {bucket_name} にアップロードしました")
+    
